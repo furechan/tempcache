@@ -1,0 +1,21 @@
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project]
+name = "tempcache"
+version = "0.0.0"
+requires-python = ">=3.8"
+dependencies = []
+optional-dependencies.dev = [
+  "cloudpickle",
+  "pytest",
+]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+addopts = [ "-p no:cacheprovider"]
+testpaths = ["tests",]
+

@@ -1,0 +1,3 @@
+# Exclude some file types from github stats
+*.ipynb linguist-documentation
+
