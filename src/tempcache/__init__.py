@@ -1,4 +1,4 @@
 """ Temp file caching utilities """
 
-from .caching import TempCache, KeyValuePair
+from .caching import TempCache
 
