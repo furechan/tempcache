@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tempcache"
-version = "0.0.5"
+version = "0.0.6"
 requires-python = ">=3.8"
 description = "Python library to cache data and function results in temporary files"
 keywords = ["utility", "command-line"]

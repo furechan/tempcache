@@ -1,8 +1,9 @@
-""" Temp file caching utilities """
+""" Temporary file based caching utilities """
 
 import re
 import time
 import pickle
+import inspect
 import logging
 import hashlib
 import tempfile
@@ -12,12 +13,11 @@ import datetime as dt
 
 from pathlib import Path
 
-from .utils import args_with_defaults
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_PREFIX = "tempcache"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
+
 
 class CacheItem:
     """ Cache Item """
@@ -77,7 +77,7 @@ class CacheItem:
 
     def delete(self):
         """ delete item """
-        logger.debug(f"deleting {self} ...")
+        logger.debug(f"deleting {self}")
 
         try:
             self.path.unlink()
@@ -88,14 +88,14 @@ class CacheItem:
 
     def load(self):
         """ load item contents """
-        logger.debug(f"loading {self} ...")
+        logger.debug(f"loading {self}")
 
         with self.path.open("rb") as file:
             return self.pickler.load(file)
 
     def save(self, data):
         """ save item contents """
-        logger.debug(f"saving {self} ...")
+        logger.debug(f"saving {self}")
 
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
@@ -105,7 +105,6 @@ class TempCache:
     """ Temporary File Cache Utility """
 
     def __init__(self, prefix=DEFAULT_PREFIX, *,
-                 factory=CacheItem,
                  pickler=None,
                  max_age=None,
                  ):
@@ -132,9 +131,7 @@ class TempCache:
         self.prefix = prefix
         self.pickler = pickler
         self.max_age = max_age
-        self.factory = factory
         self.pattern = pattern
-
 
     @staticmethod
     def make_pattern(prefix=DEFAULT_PREFIX):
@@ -150,6 +147,10 @@ class TempCache:
 
         return pattern
 
+    def cache_item(self, path):
+        """ cache item factory """
+        return CacheItem(path, pickler=self.pickler)
+
     def get_expiry(self):
         """ expiry time """
 
@@ -162,7 +163,7 @@ class TempCache:
         pattern = self.pattern.format(digest="*")
 
         for file in self.folder.glob(pattern):
-            yield self.factory(file)
+            yield self.cache_item(file)
 
     def clear_items(self, all_items=False):
         """ clear expired items with same prefix """
@@ -181,7 +182,7 @@ class TempCache:
 
         fname = self.pattern.format(digest=digest)
         path = self.folder.joinpath(fname)
-        item = self.factory(path, pickler=self.pickler)
+        item = self.cache_item(path)
 
         # delete expired item to enforce expiry
         expiry = self.get_expiry()
@@ -201,10 +202,13 @@ class TempCache:
     def item_for_task(self, func, args, kwargs):
         """ cache item for task """
 
-        args, kwargs = args_with_defaults(func, args, kwargs)
+        funcname = f"{func.__module__}.{func.__qualname__}"
 
-        key = (func.__name__, args, kwargs)
-        print("key", key)
+        signature = inspect.signature(func)
+        params = signature.bind(*args, **kwargs)
+        params.apply_defaults()
+
+        key = (funcname, params)
         data = self.pickler.dumps(key)
         digest = hashlib.md5(data).hexdigest()
 

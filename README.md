@@ -1,12 +1,16 @@
 # Python library to cache data and function results in temporary files
 
-This library offers a basic method to
-cache data and function results to temporary files.
+This library offers a simple way to
+cache data and function results using temporary files.
 By default it will use the `pickle` module
-to hash key values and to serialize data in temporary files.
+to hash key values and serialize output data.
 It is meant to work with long running functions
-whose results can be re-used. To avoid possible collisions
-make sure to use a unique prefix when instantiating `TempCache`.
+which results can be re-used. The hashing of keys is dependent
+on the pickle algorithm and so it may work accross different
+python environments, only if they have a compatible pickling algorithm.
+
+To avoid possible collisions make sure to use
+a unique prefix when instantiating `TempCache`.
 
 
 > **Note**
