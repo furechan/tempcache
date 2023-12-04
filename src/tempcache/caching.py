@@ -11,7 +11,6 @@ import functools
 import datetime as dt
 
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
 
 from .utils import args_with_defaults
 
@@ -24,6 +23,11 @@ class CacheItem:
     """ Cache Item """
 
     def __init__(self, path, pickler=None):
+        """ Cache Item
+        Args:
+            path : path of the item
+            pickler (optional) : curtom pickler module
+        """
         if isinstance(path, str):
             path = Path(path).resolve()
         if pickler is None:
@@ -98,14 +102,19 @@ class CacheItem:
 
 
 class TempCache:
-    """ facility to cache data under the temp folder """
+    """ Temporary File Cache Utility """
 
     def __init__(self, prefix=DEFAULT_PREFIX, *,
                  factory=CacheItem,
                  pickler=None,
                  max_age=None,
-                 clear_items=False,
                  ):
+        """ Temporary File Cache Utility
+        Args:
+            prefix : prefix to use to identify cache items
+            pickler (optional) : custom pickler module
+            max_age (optional) : maximum age in seconds
+        """
 
         if max_age is None:
             max_age = DEFAULT_MAX_AGE
@@ -126,9 +135,6 @@ class TempCache:
         self.factory = factory
         self.pattern = pattern
 
-        if clear_items:
-            with ThreadPoolExecutor() as worker:
-                worker.submit(self.clear_items)
 
     @staticmethod
     def make_pattern(prefix=DEFAULT_PREFIX):
