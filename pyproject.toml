@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tempcache"
-version = "0.0.2"
+version = "0.0.3"
 requires-python = ">=3.8"
-description = "Utility to locate python modules from the command line"
+description = "Python library to cache data and function results in temporary files"
 keywords = ["utility", "command-line"]
 authors = [ {"name" = "furechan", "email" = "furechan@xsmail.com"} ]
 urls = { "homepage" = "https://github.com/furechan/tempcache" }
