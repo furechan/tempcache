@@ -7,7 +7,7 @@ name = "tempcache"
 version = "0.0.6"
 requires-python = ">=3.8"
 description = "Python library to cache data and function results in temporary files"
-keywords = ["utility", "command-line"]
+keywords = ["caching", "tempfiles"]
 authors = [ {"name" = "furechan", "email" = "furechan@xsmail.com"} ]
 urls = { "homepage" = "https://github.com/furechan/tempcache" }
 readme = "README.md"
