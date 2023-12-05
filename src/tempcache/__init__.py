@@ -1,4 +1,4 @@
-""" Temporary file based caching utilities """
+"""Caching Utilitites using Temporary files"""
 
 from .caching import TempCache
 

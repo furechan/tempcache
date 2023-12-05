@@ -7,7 +7,7 @@ to hash key values and serialize output data.
 It is meant to work with long running functions
 which results can be re-used. The hashing of keys is dependent
 on the pickle algorithm and so it may work accross different
-python environments, only if they have a compatible pickling algorithm.
+python environments, as long as they have a compatible pickling algorithm.
 
 To avoid possible collisions make sure to use
 a unique prefix when instantiating `TempCache`.
