@@ -4,8 +4,8 @@ This library offers a simple way to
 cache data and function results using temporary files.
 By default it will use the `pickle` module
 to hash key values and serialize output data.
-It is meant to work with long running functions
-which results can be re-used. The hashing of keys is dependent
+It is meant to be used with long running functions
+that have repeatable results. The hashing of keys is dependent
 on the pickle algorithm and so it may work accross different
 python environments, as long as they have a compatible pickling algorithm.
 
