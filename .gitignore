@@ -1,4 +1,6 @@
 .vscode/
 .idea/
 dist/
+venv/
+.venv/
 *.pyc

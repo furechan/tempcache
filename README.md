@@ -4,13 +4,15 @@ This library offers a simple way to
 cache data and function results using temporary files.
 By default it will use the `pickle` module
 to hash key values and serialize output data.
-It is meant to be used with long running functions
+This is meant to be used with long running functions
 that have repeatable results. The hashing of keys is dependent
 on the pickle algorithm and so it may work accross different
 python environments, as long as they have a compatible pickling algorithm.
 
 To avoid possible collisions make sure to use
-a unique prefix when instantiating `TempCache`.
+a unique name when instantiating `TempCache`.
+You can also add a `source` argument as any opaque string
+to further differentiate cache keys from other caches.
 
 
 > **Note**
@@ -78,10 +80,10 @@ Examples notebooks are in the `extras` folder.
 
 ## Installation
 
-You can install the latest version of this module with `pip`.
+You can install this package with `pip`.
 
 ```console
-python -mpip install git+https://github.com/furechan/tempcache.git
+pip install tempcache
 ```
 
 ## Related Projects

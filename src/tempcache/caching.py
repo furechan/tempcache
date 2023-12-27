@@ -1,4 +1,4 @@
-"""Caching Utilitites using Temporary files"""
+""" Caching Utilitites using Temporary files """
 
 import re
 import time
@@ -15,15 +15,29 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_PREFIX = "tempcache"
+DEFAULT_NAME = "tempcache"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
+
+FILE_PATTERN = "{digest}.tmp"
+NAME_PATTERN = r"(^[A-Za-z_][A-Za-z0-9_]*)(\.[A-Za-z_][A-Za-z0-9_]*)*$"
+
+
+# MAYBE create a try_load and try_save that catch exceptions ?
+
+def check_name(name):
+    if name is None:
+        raise ValueError("Name must be a string!")
+
+    if not re.fullmatch(NAME_PATTERN, name):
+        raise ValueError(f"Invalid name {name!r}")
 
 
 class CacheItem:
-    """Cache Item"""
+    """ Cache Item """
 
-    def __init__(self, path, pickler=None):
-        """Cache Item.
+    def __init__(self, path, *, pickler=None):
+        """
+        Cache Item.
 
         Args:
             path : path of the item
@@ -31,6 +45,7 @@ class CacheItem:
         """
         if isinstance(path, str):
             path = Path(path).resolve()
+
         if pickler is None:
             pickler = pickle
 
@@ -41,13 +56,13 @@ class CacheItem:
         return self.path.name
 
     def exists(self):
-        """whether item exists"""
+        """ whether item exists """
         return self.path.exists()
 
-    def older_then(self, whence):
-        """whether item is older than specific time"""
+    def older_than(self, whence):
+        """ whether item is older than specific time """
         if isinstance(whence, dt.datetime):
-            when = whence.timestamp()
+            whence = whence.timestamp()
 
         try:
             mtime = self.path.stat().st_mtime
@@ -56,9 +71,9 @@ class CacheItem:
             return False
 
     def modified_since(self, whence):
-        """whether item has been modified since specific time"""
+        """ whether item has been modified since specific time """
         if isinstance(whence, dt.datetime):
-            when = whence.timestamp()
+            whence = whence.timestamp()
 
         try:
             mtime = self.path.stat().st_mtime
@@ -67,7 +82,7 @@ class CacheItem:
             return False
 
     def current(self, max_age=None):
-        """whether item is current"""
+        """ whether item is current """
         if max_age is None:
             return self.exists()
 
@@ -77,48 +92,53 @@ class CacheItem:
         raise ValueError(f"Invalid max_age {max_age}")
 
     def delete(self):
-        """delete item"""
+        """ delete item """
         logger.debug(f"deleting {self}")
 
         try:
             self.path.unlink()
-        except FileNotFoundError:
-            pass
-        except PermissionError:
+        except (FileNotFoundError, PermissionError):
             pass
 
     def load(self):
-        """load item contents"""
+        """ load item contents """
         logger.debug(f"loading {self}")
 
         with self.path.open("rb") as file:
             return self.pickler.load(file)
 
     def save(self, data):
-        """save item contents"""
+        """ save item contents """
         logger.debug(f"saving {self}")
+
+        # (re)create parent folder if needed
+        self.path.parent.mkdir(exist_ok=True)
 
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
 
 
 class TempCache:
-    """Temporary File Cache Utility"""
+    """ Temporary File Cache Utility """
 
-    def __init__(self, prefix=DEFAULT_PREFIX, *,
+    def __init__(self,
+                 name: str = DEFAULT_NAME, *,
                  source: str = None,
                  max_age: int = None,
                  pickler=None,
                  ):
-        """Temporary File Cache Utility.
+        """
+        Temporary File Cache Utility.
 
         Args:
-            prefix : prefix to uniquely identify cache items like a package name
+            name : name of cachig folder under tempdir (default 'tempcache')
             source (optional) : extra source information like __file__
                 used to further differentiate key hashes
             pickler (optional) : custom pickler module like cloudpickle
             max_age (optional) : maximum age in seconds
         """
+
+        check_name(name)
 
         if max_age is None:
             max_age = DEFAULT_MAX_AGE
@@ -129,76 +149,64 @@ class TempCache:
         if pickler is None:
             pickler = pickle
 
-        folder = Path(tempfile.gettempdir())
-        pattern = self.make_pattern(prefix=prefix)
+        tempdir = Path(tempfile.gettempdir())
+        path = tempdir.joinpath(name)
 
-        self.folder = folder
-        self.prefix = prefix
+        self.name = name
+        self.path = path
         self.source = source
         self.pickler = pickler
         self.max_age = max_age
-        self.pattern = pattern
 
-    @staticmethod
-    def make_pattern(prefix=DEFAULT_PREFIX):
-        """create filename pattern from prefix"""
-
-        if not isinstance(prefix, str):
-            raise ValueError(f"Invalid prefix {prefix!r}")
-
-        if re.search(r"\s|[/\\]", prefix):
-            raise ValueError(f"Invalid prefix {prefix!r}")
-
-        pattern = prefix + "-{digest}.tmp"
-
-        return pattern
+    def __repr__(self):
+        return f"TempCache({self.name!r})"
 
     def cache_item(self, path):
-        """cache item factory"""
+        """ cache item factory """
         return CacheItem(path, pickler=self.pickler)
 
     def get_expiry(self):
-        """default expiry time"""
+        """ default expiry time """
 
         expiry = time.time() - self.max_age
         return expiry
 
     def items(self):
-        """iterate over items"""
+        """ iterate over items """
 
-        pattern = self.pattern.format(digest="*")
+        pattern = FILE_PATTERN.format(digest="*")
 
-        for file in self.folder.glob(pattern):
+        for file in self.path.glob(pattern):
             yield self.cache_item(file)
 
     def clear_items(self, all_items=False):
-        """clear expired items"""
+        """ clear expired items """
 
         count = 0
         expiry = self.get_expiry()
         for item in self.items():
-            if all_items or item.older_then(expiry):
+            if all_items or item.older_than(expiry):
                 item.delete()
                 count += 1
 
         return count
 
     def item_for_digest(self, digest):
-        """cache item for digest"""
+        """ cache item for digest. deletes item if expired """
 
-        fname = self.pattern.format(digest=digest)
-        path = self.folder.joinpath(fname)
+        fname = FILE_PATTERN.format(digest=digest)
+        path = self.path.joinpath(fname)
         item = self.cache_item(path)
 
         # delete expired item to enforce expiry
         expiry = self.get_expiry()
-        if item.older_then(expiry):
+        if item.older_than(expiry):
             item.delete()
 
         return item
 
     def item_for_key(self, key):
-        """cache item for key"""
+        """ cache item for key. deletes item if expired """
 
         hash = hashlib.md5()
 
@@ -214,7 +222,7 @@ class TempCache:
         return self.item_for_digest(digest)
 
     def item_for_task(self, func, args, kwargs):
-        """cache item for task"""
+        """ cache item for task. deletes item if expired """
 
         funcname = f"{func.__module__}.{func.__qualname__}"
 
@@ -227,7 +235,7 @@ class TempCache:
         return self.item_for_key(key)
 
     def cache_result(self, func, *args, **kwargs):
-        """return cached result if found or else invoke function"""
+        """ return cached result if found or else invoke function """
 
         item = self.item_for_task(func, args, kwargs)
 
@@ -241,7 +249,7 @@ class TempCache:
         return result
 
     def __call__(self, func):
-        """use instance as decorator to create a cached function wrapper"""
+        """ use instance as decorator to create a cached function wrapper """
 
         @functools.wraps(func)
         def cached_func(*args, **kwargs):
