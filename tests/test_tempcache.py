@@ -1,10 +1,9 @@
 """ tempcache tests """
 
-import pytest
+import os
 import shutil
 import base64
-
-from random import Random
+import pytest
 
 from tempcache import TempCache
 
@@ -21,11 +20,12 @@ def cache():
     return cache
 
 
-def sample_data(seed=0, size=32):
-    data = Random(seed).randbytes(size)
+def sample_data(prefix="sample", *, size=32):
+    data = os.urandom(size)
     data = base64.b64encode(data)
     data = data.decode("utf-8")
-    return data
+    result = prefix + "-" + data
+    return result
 
 
 def test_cache_item(cache):
@@ -49,9 +49,10 @@ def test_cache_item(cache):
 
 def test_cache_result(cache):
     res = cache.cache_result(sample_data)
-    assert res == cache.cache_result(sample_data, 0)
-    assert res == cache.cache_result(sample_data, 0, 32)
+
+    assert res == cache.cache_result(sample_data, "sample")
+    assert res != cache.cache_result(sample_data, "other")
 
     count = cache.clear_items(all_items=True)
 
-    assert count == 1
+    assert count == 2
