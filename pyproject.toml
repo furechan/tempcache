@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tempcache"
-version = "0.0.6"
+version = "0.0.7"
 requires-python = ">=3.8"
 description = "Python library to cache data and function results in temporary files"
 keywords = ["caching", "tempfiles"]
@@ -24,6 +24,10 @@ dev = [ "cloudpickle", "twine", "invoke", "pytest", "build", "toml" ]
 
 [tool.hatch.build]
 sources = ["src"]
+
+[tool.pydev]
+allow-publish=true
+
 
 [tool.pytest.ini_options]
 addopts = [ "-p no:cacheprovider"]
