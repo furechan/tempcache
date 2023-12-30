@@ -23,6 +23,7 @@ classifiers = [
 dev = [ "cloudpickle", "twine", "invoke", "pytest", "build", "toml" ]
 
 [tool.hatch.build]
+dev-mode-dirs = ["src"]
 sources = ["src"]
 
 [tool.pydev]
