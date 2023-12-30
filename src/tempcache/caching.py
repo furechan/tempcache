@@ -24,6 +24,7 @@ NAME_PATTERN = r"(^[A-Za-z_][A-Za-z0-9_]*)(\.[A-Za-z_][A-Za-z0-9_]*)*$"
 
 # MAYBE create a try_load and try_save that catch exceptions ?
 
+
 def check_name(name):
     if name is None:
         raise ValueError("Name must be a string!")
@@ -33,7 +34,7 @@ def check_name(name):
 
 
 class CacheItem:
-    """ Cache Item """
+    """Cache Item"""
 
     def __init__(self, path, *, pickler=None):
         """
@@ -56,11 +57,11 @@ class CacheItem:
         return self.path.name
 
     def exists(self):
-        """ whether item exists """
+        """whether item exists"""
         return self.path.exists()
 
     def older_than(self, whence):
-        """ whether item is older than specific time """
+        """whether item is older than specific time"""
         if isinstance(whence, dt.datetime):
             whence = whence.timestamp()
 
@@ -71,7 +72,7 @@ class CacheItem:
             return False
 
     def modified_since(self, whence):
-        """ whether item has been modified since specific time """
+        """whether item has been modified since specific time"""
         if isinstance(whence, dt.datetime):
             whence = whence.timestamp()
 
@@ -82,7 +83,7 @@ class CacheItem:
             return False
 
     def current(self, max_age=None):
-        """ whether item is current """
+        """whether item is current"""
         if max_age is None:
             return self.exists()
 
@@ -92,7 +93,7 @@ class CacheItem:
         raise ValueError(f"Invalid max_age {max_age}")
 
     def delete(self):
-        """ delete item """
+        """delete item"""
         logger.debug(f"deleting {self}")
 
         try:
@@ -101,14 +102,14 @@ class CacheItem:
             pass
 
     def load(self):
-        """ load item contents """
+        """load item contents"""
         logger.debug(f"loading {self}")
 
         with self.path.open("rb") as file:
             return self.pickler.load(file)
 
     def save(self, data):
-        """ save item contents """
+        """save item contents"""
         logger.debug(f"saving {self}")
 
         # (re)create parent folder if needed
@@ -119,14 +120,16 @@ class CacheItem:
 
 
 class TempCache:
-    """ Temporary File Cache Utility """
+    """Temporary File Cache Utility"""
 
-    def __init__(self,
-                 name: str = DEFAULT_NAME, *,
-                 source: str = None,
-                 max_age: int = None,
-                 pickler=None,
-                 ):
+    def __init__(
+        self,
+        name: str = DEFAULT_NAME,
+        *,
+        source: str = None,
+        max_age: int = None,
+        pickler=None,
+    ):
         """
         Temporary File Cache Utility.
 
@@ -162,17 +165,17 @@ class TempCache:
         return f"TempCache({self.name!r})"
 
     def cache_item(self, path):
-        """ cache item factory """
+        """cache item factory"""
         return CacheItem(path, pickler=self.pickler)
 
     def get_expiry(self):
-        """ default expiry time """
+        """default expiry time"""
 
         expiry = time.time() - self.max_age
         return expiry
 
     def items(self):
-        """ iterate over items """
+        """iterate over items"""
 
         pattern = FILE_PATTERN.format(digest="*")
 
@@ -180,7 +183,7 @@ class TempCache:
             yield self.cache_item(file)
 
     def clear_items(self, all_items=False):
-        """ clear expired items """
+        """clear expired items"""
 
         count = 0
         expiry = self.get_expiry()
@@ -192,7 +195,7 @@ class TempCache:
         return count
 
     def item_for_digest(self, digest):
-        """ cache item for digest. deletes item if expired """
+        """cache item for digest. deletes item if expired"""
 
         fname = FILE_PATTERN.format(digest=digest)
         path = self.path.joinpath(fname)
@@ -206,7 +209,7 @@ class TempCache:
         return item
 
     def item_for_key(self, key):
-        """ cache item for key. deletes item if expired """
+        """cache item for key. deletes item if expired"""
 
         hash = hashlib.md5()
 
@@ -222,7 +225,7 @@ class TempCache:
         return self.item_for_digest(digest)
 
     def item_for_task(self, func, args, kwargs):
-        """ cache item for task. deletes item if expired """
+        """cache item for task. deletes item if expired"""
 
         funcname = f"{func.__module__}.{func.__qualname__}"
 
@@ -235,7 +238,7 @@ class TempCache:
         return self.item_for_key(key)
 
     def cache_result(self, func, *args, **kwargs):
-        """ return cached result if found or else invoke function """
+        """return cached result if found or else invoke function"""
 
         item = self.item_for_task(func, args, kwargs)
 
@@ -249,7 +252,7 @@ class TempCache:
         return result
 
     def __call__(self, func):
-        """ use instance as decorator to create a cached function wrapper """
+        """use instance as decorator to create a cached function wrapper"""
 
         @functools.wraps(func)
         def cached_func(*args, **kwargs):

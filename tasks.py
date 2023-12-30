@@ -12,7 +12,7 @@ root_folder = Path(__file__).parent
 
 
 def get_config(folder):
-    """ Parse pyproject.toml file """
+    """Parse pyproject.toml file"""
 
     pyproject = folder.joinpath("pyproject.toml").resolve()
 
@@ -24,22 +24,22 @@ def get_config(folder):
 
 @task
 def clean(ctx):
-    """ Clean build and dist folders """
-    patterns = ['build', 'dist']
+    """Clean build and dist folders"""
+    patterns = ["build", "dist"]
     for pattern in patterns:
         ctx.run("rm -rf {}".format(pattern))
 
 
 @task
 def build(ctx):
-    """ Build wheel with python -mbuild """
+    """Build wheel with python -mbuild"""
 
     ctx.run("python -mbuild --wheel")
 
 
 @task
 def publish(ctx, test_only=False):
-    """ Publish project with twine """
+    """Publish project with twine"""
 
     if test_only:
         ctx.run("twine upload --repository testpypi dist/*")
