@@ -23,11 +23,13 @@ classifiers = [
 dev = [ "cloudpickle", "twine", "invoke", "pytest", "build", "toml" ]
 
 [tool.hatch.build]
+targets.wheel.sources = ["src"]
 dev-mode-dirs = ["src"]
-sources = ["src"]
+only-include = ["src"]
+exclude = [".*"]
 
 [tool.pydev]
-allow-publish=true
+allow-publish = true
 
 [tool.pytest.ini_options]
 addopts = [ "-p no:cacheprovider"]
