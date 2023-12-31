@@ -3,13 +3,8 @@ import nox
 import tempfile
 
 ENVDIR = os.path.join(tempfile.gettempdir(), "nox")
-# USE_CONDA = os.getenv("CONDA_DEFAULT_ENV")
-USE_CONDA = False
 
 nox.options.envdir = ENVDIR
-
-if USE_CONDA:
-    nox.options.default_venv_backend = "conda"
 
 
 @nox.session
