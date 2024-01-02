@@ -13,8 +13,6 @@ urls = { "homepage" = "https://github.com/furechan/tempcache" }
 readme = "README.md"
 license = { text = "MIT License" }
 classifiers = [
-    "Topic :: Utilities",
-    "Development Status :: 2 - Pre-Alpha",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License"
 ]
