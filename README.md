@@ -90,6 +90,7 @@ pip install tempcache
 
 - [joblib](https://github.com/joblib/joblib)
 Computing with Python functions
+- [percache](https://pypi.org/project/percache/)
+Persistently cache results of callables
 - [cloudpickle](https://github.com/cloudpipe/cloudpickle)
 Extended pickling support for Python objects
-
