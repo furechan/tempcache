@@ -258,4 +258,4 @@ class TempCache:
         def cached_func(*args, **kwargs):
             return self.cache_result(func, *args, **kwargs)
 
-        return cached_func()
+        return cached_func

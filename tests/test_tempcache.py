@@ -56,3 +56,16 @@ def test_cache_result(cache):
     count = cache.clear_items(all_items=True)
 
     assert count == 2
+
+
+def test_cache_wrapper(cache):
+    wrapper = cache(sample_data)
+
+    res1 = wrapper("wrapper")
+    res2 = wrapper("wrapper")
+
+    assert res1 == res2
+
+    count = cache.clear_items(all_items=True)
+
+    assert count == 1
