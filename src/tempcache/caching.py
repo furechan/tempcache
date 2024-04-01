@@ -9,6 +9,8 @@ import hashlib
 import tempfile
 import functools
 
+import warnings
+
 import datetime as dt
 
 from pathlib import Path
@@ -19,17 +21,14 @@ DEFAULT_NAME = "tempcache"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
 
 FILE_PATTERN = "{digest}.tmp"
-NAME_PATTERN = r"(^[A-Za-z_][A-Za-z0-9_]*)(\.[A-Za-z_][A-Za-z0-9_]*)*$"
-
 
 # MAYBE create a try_load and try_save that catch exceptions ?
-
 
 def check_name(name):
     if name is None:
         raise ValueError("Name must be a string!")
 
-    if not re.fullmatch(NAME_PATTERN, name):
+    if re.search(r"\.\.|/|\\", name):
         raise ValueError(f"Invalid name {name!r}")
 
 
@@ -61,7 +60,7 @@ class CacheItem:
         return self.path.exists()
 
     def older_than(self, whence):
-        """whether item is older than specific time"""
+        """whether item is older than whence"""
         if isinstance(whence, dt.datetime):
             whence = whence.timestamp()
 
@@ -71,8 +70,8 @@ class CacheItem:
         except FileNotFoundError:
             return False
 
-    def modified_since(self, whence):
-        """whether item has been modified since specific time"""
+    def newer_than(self, whence):
+        """whether item is newer than whence"""
         if isinstance(whence, dt.datetime):
             whence = whence.timestamp()
 
@@ -82,13 +81,20 @@ class CacheItem:
         except FileNotFoundError:
             return False
 
+    def modified_since(self, whence):
+        """whether item has been modified since specific time"""
+
+        warnings.warn("modified_since is legacy. Use newer_than instead!")
+
+        return self.newer_than(whence)
+
     def current(self, max_age=None):
         """whether item is current"""
         if max_age is None:
             return self.exists()
 
         if max_age >= 0:
-            return self.modified_since(time.time() - max_age)
+            return self.newer_than(time.time() - max_age)
 
         raise ValueError(f"Invalid max_age {max_age}")
 

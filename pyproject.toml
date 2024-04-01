@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tempcache"
-version = "0.0.8"
+version = "0.0.9"
 readme = "README.md"
 license = { text = "MIT License" }
 requires-python = ">=3.8"
@@ -19,7 +19,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = [ "cloudpickle", "twine", "invoke", "pytest", "build", "toml" ]
+dev = [ "pytest", "cloudpickle"]
 
 [tool.hatch.build]
 targets.wheel.sources = ["src"]

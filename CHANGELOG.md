@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.9
+- `modified_since` is deprecated. Use `newer_than` intead.
+
 ## 0.0.7
 - Replaced `random.randbytes` with `os.urandom` in tests
 - Added `tox.ini` configuration file
