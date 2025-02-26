@@ -2,7 +2,7 @@
 
 This library offers a simple way to cache data and function results using temporary files, including a mechanism for automatic expiration after a certain time.
 
-The package uses the `pickle` module by default to serialize data and hash key values.
+Dy default, the package uses the `pickle` module to serialize data and hash key values.
 
 
 > **Note**
@@ -64,10 +64,10 @@ cache = TempCache("tempcache-foo",
                        max_age=CACHE_MAX_AGE)
 
 key = ...
-# key object can be complex as long as it it pickeable
+# key object can be complex as long as it is pickle-able
 
 item = cache.item_for_key(key)
-# cache item for the given key wether it exists or not
+# cache item for the given key whether it exists or not
 
 # load item if it exists
 if item.exists():
