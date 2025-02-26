@@ -1,10 +1,8 @@
 # Python library to cache data and function results in temporary files
 
-This library offers a simple way to
-cache data and function results using temporary files.
+This library offers a simple way to cache data and function results using temporary files, including a mechanism for automatic expiration after a certain time.
 
-The package uses the `pickle` module by default
-to serialize data and hash key values.
+The package uses the `pickle` module by default to serialize data and hash key values.
 
 
 > **Note**

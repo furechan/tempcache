@@ -22,106 +22,6 @@ FILE_PATTERN = "{digest}.tmp"
 
 
 
-class CacheItem:
-    """A cache item representing a single cached object on disk.
-    """
-
-    def __init__(self, path, *, pickler=None):
-        """Initialize a cache item.
-
-        Args:
-            path: Path of the cached item
-            pickler: Custom pickler module (defaults to pickle)
-        """
-        if isinstance(path, str):
-            path = Path(path).resolve()
-
-        if pickler is None:
-            pickler = pickle
-
-        self.path = path
-        self.pickler = pickler
-
-
-    def exists(self):
-        """Check whether item exists on disk.
-        
-        Returns:
-            bool: True if the file exists, False otherwise
-        """
-        return self.path.exists()
-
-    def older_than(self, whence):
-        """Check whether item is older than given timestamp.
-        
-        Args:
-            whence: Timestamp or datetime to compare against
-            
-        Returns:
-            bool: True if file exists and is older than whence, False otherwise
-        """
-        if isinstance(whence, dt.datetime):
-            whence = whence.timestamp()
-
-        try:
-            mtime = self.path.stat().st_mtime
-            return mtime < whence
-        except FileNotFoundError:
-            return False
-
-    def newer_than(self, whence):
-        """Check whether item is newer than given timestamp.
-        
-        Args:
-            whence: Timestamp or datetime to compare against
-            
-        Returns:
-            bool: True if file exists and is newer than whence, False otherwise
-        """
-        if isinstance(whence, dt.datetime):
-            whence = whence.timestamp()
-
-        try:
-            mtime = self.path.stat().st_mtime
-            return mtime > whence
-        except FileNotFoundError:
-            return False
-
-    def delete(self):
-        """Delete the cache item from disk."""
-        logger.debug("Deleting %s", self.path)
-
-        try:
-            self.path.unlink()
-        except (FileNotFoundError, PermissionError):
-            pass
-
-    def load(self):
-        """Load and unpickle the cached item contents.
-        
-        Returns:
-            The unpickled object
-        """
-        logger.debug("Loading %s", self.path)
-
-        with self.path.open("rb") as file:
-            return self.pickler.load(file)
-
-    def save(self, data):
-        """Pickle and save data to the cache item.
-        
-        Args:
-            data: Object to pickle and save
-        """
-        logger.debug("saving %s", self.path)
-
-        # (re)create parent folder if needed
-        self.path.parent.mkdir(exist_ok=True)
-
-        with self.path.open("wb") as file:
-            self.pickler.dump(data, file)
-
-
 class TempCache:
     """Temporary File Cache Utility.
     
@@ -129,6 +29,9 @@ class TempCache:
     The cache folder is automatically created if it does not exist.
     Objects are stored as pickled files with a hash of the key for filename.
     """
+
+    ONEDAY = 24 * 60 * 60
+    ONEHOUR = 60 * 60
 
     @staticmethod
     def check_name(name):
@@ -341,3 +244,104 @@ class TempCache:
             return self.cache_result(func, *args, **kwargs)
 
         return cached_func
+
+
+class CacheItem:
+    """A cache item representing a single cached object on disk.
+    """
+
+    def __init__(self, path, *, pickler=None):
+        """Initialize a cache item.
+
+        Args:
+            path: Path of the cached item
+            pickler: Custom pickler module (defaults to pickle)
+        """
+        if isinstance(path, str):
+            path = Path(path).resolve()
+
+        if pickler is None:
+            pickler = pickle
+
+        self.path = path
+        self.pickler = pickler
+
+
+    def exists(self):
+        """Check whether item exists on disk.
+        
+        Returns:
+            bool: True if the file exists, False otherwise
+        """
+        return self.path.exists()
+
+    def older_than(self, whence):
+        """Check whether item is older than given timestamp.
+        
+        Args:
+            whence: Timestamp or datetime to compare against
+            
+        Returns:
+            bool: True if file exists and is older than whence, False otherwise
+        """
+        if isinstance(whence, dt.datetime):
+            whence = whence.timestamp()
+
+        try:
+            mtime = self.path.stat().st_mtime
+            return mtime < whence
+        except FileNotFoundError:
+            return False
+
+    def newer_than(self, whence):
+        """Check whether item is newer than given timestamp.
+        
+        Args:
+            whence: Timestamp or datetime to compare against
+            
+        Returns:
+            bool: True if file exists and is newer than whence, False otherwise
+        """
+        if isinstance(whence, dt.datetime):
+            whence = whence.timestamp()
+
+        try:
+            mtime = self.path.stat().st_mtime
+            return mtime > whence
+        except FileNotFoundError:
+            return False
+
+    def delete(self):
+        """Delete the cache item from disk."""
+        logger.debug("Deleting %s", self.path)
+
+        try:
+            self.path.unlink()
+        except (FileNotFoundError, PermissionError):
+            pass
+
+    def load(self):
+        """Load and unpickle the cached item contents.
+        
+        Returns:
+            The unpickled object
+        """
+        logger.debug("Loading %s", self.path)
+
+        with self.path.open("rb") as file:
+            return self.pickler.load(file)
+
+    def save(self, data):
+        """Pickle and save data to the cache item.
+        
+        Args:
+            data: Object to pickle and save
+        """
+        logger.debug("saving %s", self.path)
+
+        # (re)create parent folder if needed
+        self.path.parent.mkdir(exist_ok=True)
+
+        with self.path.open("wb") as file:
+            self.pickler.dump(data, file)
+
