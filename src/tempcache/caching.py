@@ -9,27 +9,17 @@ import hashlib
 import tempfile
 import functools
 
-import warnings
-
 import datetime as dt
 
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 DEFAULT_NAME = "tempcache"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
-
 FILE_PATTERN = "{digest}.tmp"
 
-# MAYBE create a try_load and try_save that catch exceptions ?
-
-def check_name(name):
-    if name is None:
-        raise ValueError("Name must be a string!")
-
-    if re.search(r"\.\.|/|\\", name):
-        raise ValueError(f"Invalid name {name!r}")
 
 
 class CacheItem:
@@ -37,7 +27,7 @@ class CacheItem:
 
     def __init__(self, path, *, pickler=None):
         """
-        Cache Item.
+        Cache Item
 
         Args:
             path : path of the item
@@ -52,8 +42,6 @@ class CacheItem:
         self.path = path
         self.pickler = pickler
 
-    def __str__(self):
-        return self.path.name
 
     def exists(self):
         """whether item exists"""
@@ -81,26 +69,9 @@ class CacheItem:
         except FileNotFoundError:
             return False
 
-    def modified_since(self, whence):
-        """whether item has been modified since specific time"""
-
-        warnings.warn("modified_since is legacy. Use newer_than instead!")
-
-        return self.newer_than(whence)
-
-    def current(self, max_age=None):
-        """whether item is current"""
-        if max_age is None:
-            return self.exists()
-
-        if max_age >= 0:
-            return self.newer_than(time.time() - max_age)
-
-        raise ValueError(f"Invalid max_age {max_age}")
-
     def delete(self):
         """delete item"""
-        logger.debug(f"deleting {self}")
+        logger.debug("Deleting %s", self.path)
 
         try:
             self.path.unlink()
@@ -109,14 +80,14 @@ class CacheItem:
 
     def load(self):
         """load item contents"""
-        logger.debug(f"loading {self}")
+        logger.debug("Loading %s", self.path)
 
         with self.path.open("rb") as file:
             return self.pickler.load(file)
 
     def save(self, data):
         """save item contents"""
-        logger.debug(f"saving {self}")
+        logger.debug("saving %s", self.path)
 
         # (re)create parent folder if needed
         self.path.parent.mkdir(exist_ok=True)
@@ -128,13 +99,22 @@ class CacheItem:
 class TempCache:
     """Temporary File Cache Utility"""
 
+    @staticmethod
+    def check_name(name):
+        """check name is valid"""
+        if name is None:
+            raise ValueError("Name must be a string!")
+
+        if re.search(r"\.\.|/|\\", name):
+            raise ValueError(f"Invalid name {name!r}")
+
     def __init__(
         self,
         name: str = DEFAULT_NAME,
         *,
         source: str = None,
         max_age: int = None,
-        pickler=None,
+        pickler: object = None,
     ):
         """
         Temporary File Cache Utility.
@@ -147,7 +127,7 @@ class TempCache:
             max_age (optional) : maximum age in seconds
         """
 
-        check_name(name)
+        self.check_name(name)
 
         if max_age is None:
             max_age = DEFAULT_MAX_AGE
@@ -158,8 +138,7 @@ class TempCache:
         if pickler is None:
             pickler = pickle
 
-        tempdir = Path(tempfile.gettempdir())
-        path = tempdir.joinpath(name)
+        path = Path(tempfile.gettempdir(), name)
 
         self.name = name
         self.path = path
@@ -201,7 +180,7 @@ class TempCache:
         return count
 
     def item_for_digest(self, digest):
-        """cache item for digest. deletes item if expired"""
+        """Item for digest. deletes item if expired"""
 
         fname = FILE_PATTERN.format(digest=digest)
         path = self.path.joinpath(fname)
@@ -215,7 +194,7 @@ class TempCache:
         return item
 
     def item_for_key(self, key):
-        """cache item for key. deletes item if expired"""
+        """Item for key. deletes item if expired"""
 
         hash = hashlib.md5()
 
@@ -231,7 +210,12 @@ class TempCache:
         return self.item_for_digest(digest)
 
     def item_for_task(self, func, args, kwargs):
-        """cache item for task. deletes item if expired"""
+        """
+        Item for task. deletes item if expired
+        
+        A task represent a function and its arguments.
+        Used in cache_result
+        """
 
         funcname = f"{func.__module__}.{func.__qualname__}"
 
@@ -248,12 +232,18 @@ class TempCache:
 
         item = self.item_for_task(func, args, kwargs)
 
-        if item.exists():
-            return item.load()
+        try:
+            if item.exists():
+                return item.load()
+        except Exception as ex:
+            logger.warning("Failed to load %s: %s", item.path, ex)
 
         result = func(*args, **kwargs)
 
-        item.save(result)
+        try:
+            item.save(result)
+        except Exception as ex:
+            logger.warning("Failed to save %s: %s", item.path, ex)
 
         return result
 

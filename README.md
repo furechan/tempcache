@@ -72,6 +72,19 @@ CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
 temp_cache = TempCache("tempcache-foo",
                        pickler=cloudpickle,
                        max_age=CACHE_MAX_AGE)
+
+key = ...
+# key object can be complex as long as it it pickeable
+
+item = temp_cache.item_for_key(key)
+# cache item for the given key wether it exists or not
+
+value = item.load()
+
+if value is None:
+    value = compute(...)
+    item.save(value)
+
 ```
 
 ## Examples
@@ -92,5 +105,7 @@ pip install tempcache
 Computing with Python functions
 - [percache](https://pypi.org/project/percache/)
 Persistently cache results of callables
+- [disckcache](https://pypi.org/project/diskcache/)
+Disk and file backed cache library compatible with Django
 - [cloudpickle](https://github.com/cloudpipe/cloudpickle)
 Extended pickling support for Python objects
