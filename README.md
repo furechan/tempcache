@@ -69,12 +69,12 @@ key = ...
 item = cache.item_for_key(key)
 # cache item for the given key wether it exists or not
 
-value = item.load()
+# load item if it exists
+if item.exists():
+    value = item.load()
 
-if value is None:
-    value = compute(...)
-    item.save(value)
-
+# save item
+item.save(value)
 ```
 
 
