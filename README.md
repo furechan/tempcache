@@ -2,17 +2,9 @@
 
 This library offers a simple way to
 cache data and function results using temporary files.
-By default it will use the `pickle` module
-to hash key values and serialize output data.
-This is meant to be used with long running functions
-that have repeatable results. The hashing of keys is dependent
-on the pickle algorithm and so it may work accross different
-python environments, as long as they have a compatible pickling algorithm.
 
-To avoid possible collisions make sure to use
-a unique name when instantiating `TempCache`.
-You can also add a `source` argument as any opaque string
-to further differentiate cache keys from other caches.
+The package uses the `pickle` module by default
+to serialize data and hash key values.
 
 
 > **Note**
@@ -29,9 +21,9 @@ to automatically cache the results of a function.
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-temp_cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
+cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
 
-@temp_cache
+@cache
 def long_running(...):
     ...
 
@@ -47,20 +39,20 @@ at the call site with the `cache_result` method.
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-temp_cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
+cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
 
 def long_running(...):
     ...
 
-result = temp_cache.cache_result(long_running, ...)
+result = cache.cache_result(long_running, ...)
 ```
 
 ## Advanced usage
 
 In cases where the function or some of its arguments
 are defined in the `__main__` namespace or in a jupyter notebook
-and cannot be pickled by `pickle` you may want
-to use a different pickle module like `cloupickle`.
+and cannot be pickled by `pickle` you can use a different pickle module
+like `cloupickle`.
 
 
 ```python
@@ -69,14 +61,14 @@ import cloudpickle
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-temp_cache = TempCache("tempcache-foo",
+cache = TempCache("tempcache-foo",
                        pickler=cloudpickle,
                        max_age=CACHE_MAX_AGE)
 
 key = ...
 # key object can be complex as long as it it pickeable
 
-item = temp_cache.item_for_key(key)
+item = cache.item_for_key(key)
 # cache item for the given key wether it exists or not
 
 value = item.load()
@@ -86,6 +78,7 @@ if value is None:
     item.save(value)
 
 ```
+
 
 ## Examples
 
