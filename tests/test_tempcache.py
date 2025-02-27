@@ -10,9 +10,10 @@ from tempcache import TempCache
 
 @pytest.fixture
 def cache():
-    cache = TempCache("tempcache-test")
+    name = "tempcache-test"
+    cache = TempCache(name)
 
-    assert cache.path.name == "tempcache-test"
+    assert cache.path.name == name
 
     if cache.path.exists():
         shutil.rmtree(cache.path)
@@ -36,9 +37,9 @@ def test_cache_item(cache):
 
     assert item is not None
 
-    item.save(value)
+    item.try_save(value)
 
-    res = item.load()
+    res = item.try_load()
 
     assert res == value
 

@@ -85,6 +85,8 @@ Methods:
 - `delete()`: Delete the cached item
 - `load()`: Load item contents
 - `save(data)`: Save item contents
+- `try_load()`: Load item contents, ignoring errors
+- `try_save(data)`: Save item contents, ignoring errors
 
 ## Examples
 
@@ -142,6 +144,25 @@ cache.clear_items()
 
 # Clear all items
 cache.clear_items(all_items=True)
+```
+
+### Safe Cache Operations
+
+```python
+from tempcache import TempCache
+
+cache = TempCache("mycache")
+item = cache.item_for_key("my_data")
+
+# Safe loading - no exception if file doesn't exist
+data = item.try_load()
+if data is None:
+    print("No cached data found")
+
+# Safe saving - handle failures gracefully
+success = item.try_save({"name": "John", "age": 30})
+if not success:
+    print("Failed to save to cache")
 ```
 
 ## Best Practices

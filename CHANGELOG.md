@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.10
+- Added `try_load` and `try_save` methods to `CacheItem`
+
 ## 0.0.9
 - `modified_since` is deprecated. Use `newer_than` intead.
 

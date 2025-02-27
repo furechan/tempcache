@@ -31,5 +31,4 @@ jobs:
     - name: Lint with Ruff
       run: ruff check --output-format=github .
     - name: Test with pytest
-      run: |
-        pytest
+      run: pytest

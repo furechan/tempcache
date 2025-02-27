@@ -312,13 +312,13 @@ class CacheItem:
             return False
 
     def delete(self):
-        """Delete the cache item from disk."""
+        """Delete the cache item from disk. Ignoring errors."""
         logger.debug("Deleting %s", self.path)
 
         try:
             self.path.unlink()
-        except (FileNotFoundError, PermissionError):
-            pass
+        except (FileNotFoundError, PermissionError) as ex:
+            logger.warning("Error deleting %s: %s", self.path.name, ex)
 
     def load(self):
         """Load and unpickle the cached item contents.
@@ -330,6 +330,17 @@ class CacheItem:
 
         with self.path.open("rb") as file:
             return self.pickler.load(file)
+
+    def try_load(self):
+        """Load and unpickle the cached item contents, ignoring errors.
+        
+        Returns:
+            The unpickled object or None if there was an error
+        """
+        try:
+            return self.load()
+        except Exception as ex:
+            logger.warning("Error loading %s: %s", self.path.name, ex)
 
     def save(self, data):
         """Pickle and save data to the cache item.
@@ -344,4 +355,17 @@ class CacheItem:
 
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
+
+
+    def try_save(self, data):
+        """Pickle and save data to the cache item, ignoring errors.
+        
+        Args:
+            data: Object to pickle and save
+        """
+        try:
+            return self.save(data)
+        except Exception as ex:
+            logger.warning("Error saving %s: %s", self.path.name, ex)
+
 
