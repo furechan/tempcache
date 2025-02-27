@@ -3,15 +3,6 @@
 TempCache is a Python utility that provides temporary file-based caching functionality. It's designed to cache function results and arbitrary data using the system's temporary directory.
 
 
-## Features
-
-- File-based caching using system's temp directory
-- Automatic cache expiration
-- Custom pickle support
-- Function caching through decorators
-- Key-based caching for arbitrary data
-
-
 ## Installation
 
 ```bash
@@ -20,42 +11,74 @@ pip install tempcache
 
 ## Basic Usage
 
-### Simple Function Caching
+An instance of the `TempCache` class be used as a decorator
+to automatically cache the results of a function.
 
 ```python
 from tempcache import TempCache
 
-# Create a cache instance
-cache = TempCache("mycache")
+CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
+cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
 
-# Use as a decorator.
-# Function parameters and return values must be pickle-able
 @cache
-def expensive_function(x, y):
-    # Some expensive computation
-    return x + y
+def long_running(...):
+    ...
+
+result = long_running(...)
 ```
 
-### Manual Cache Management
+## Caching results at the call site
+
+You can also use a `TempCache` object to cache a result
+at the call site with the `cache_result` method. 
 
 ```python
-# Create a cache instance
-cache = TempCache("mycache")
+from tempcache import TempCache
 
-# Cache some data
-item = cache.item_for_key("my_key")
-item.save({"data": "value"})
+CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
+cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
 
-# Retrieve cached data
-if item.exists():
-    data = item.load()
+def long_running(...):
+    ...
 
+result = cache.cache_result(long_running, ...)
 ```
 
+## Advanced usage
+
+In cases where the function or some of its arguments
+are defined in the `__main__` namespace or in a jupyter notebook
+and cannot be pickled by `pickle` you can use a different pickle module
+like `cloupickle`.
+
+
+```python
+import cloudpickle
+
+from tempcache import TempCache
+
+CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
+cache = TempCache("tempcache-foo",
+                       pickler=cloudpickle,
+                       max_age=CACHE_MAX_AGE)
+
+key = ...
+# key object can be complex as long as it is pickle-able
+
+item = cache.item_for_key(key)
+# cache item for the given key whether it exists or not
+
+# load item if it exists
+if item.exists():
+    value = item.load()
+
+# save item
+item.save(value)
+```
 
 ## API Reference
 
-### TempCache Class
+### `TempCache` Class
 
 ```python
 TempCache(name='tempcache', *, source=None, max_age=None, pickler=None)
@@ -75,7 +98,7 @@ Methods:
 - `cache_result(func, *args, **kwargs)`: Cache function results
 - `__call__(func)`: Decorator interface for function caching
 
-### CacheItem Class
+### `CacheItem` Class
 
 ```python
 CacheItem(path, *, pickler=None)
@@ -93,80 +116,15 @@ Methods:
 - `try_load()`: Load item contents, ignoring errors
 - `try_save(data)`: Save item contents, ignoring errors
 
-## Further Examples
 
-### Caching Function Results
+## Features
 
-```python
-from tempcache import TempCache
+- File-based caching using system's temp directory
+- Automatic cache expiration
+- Custom pickle support
+- Function caching through decorators
+- Key-based caching for arbitrary data
 
-# Create cache with custom expiration (1 hour)
-cache = TempCache("mycache", max_age=3600)
-
-@cache
-def fetch_data(url):
-    # Expensive network operation
-    return requests.get(url).json()
-
-# First call will fetch and cache
-data = fetch_data("https://api.example.com/data")
-
-# Subsequent calls will use cached data if not expired
-data = fetch_data("https://api.example.com/data")
-```
-
-### Using Custom Pickler
-
-```python
-import cloudpickle
-from tempcache import TempCache
-
-# Create cache with custom pickler
-cache = TempCache("mycache", pickler=cloudpickle)
-
-# Now you can cache more complex objects
-item = cache.item_for_key("complex_data")
-item.save({"lambda": lambda x: x*2})
-```
-
-### Manual Cache Management
-
-```python
-from tempcache import TempCache
-
-cache = TempCache("mycache")
-
-# Save data
-item = cache.item_for_key(("user", 123))
-item.save({"name": "John", "age": 30})
-
-# Check expiration
-if item.newer_than(some_timestamp):
-    data = item.load()
-
-# Clear expired items
-cache.clear_items()
-
-# Clear all items
-cache.clear_items(all_items=True)
-```
-
-### Safe Cache Operations
-
-```python
-from tempcache import TempCache
-
-cache = TempCache("mycache")
-item = cache.item_for_key("my_data")
-
-# Safe loading - no exception if file doesn't exist
-data = item.try_load()
-if data is None:
-    print("No cached data found")
-
-# Safe saving - handle failures gracefully
-item.try_save({"name": "John", "age": 30})
-```
 
 ## Best Practices
 

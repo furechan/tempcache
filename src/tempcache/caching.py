@@ -122,7 +122,7 @@ class TempCache:
         """Clear expired or all cache items.
 
         Args:
-            all_items: If True, clear all items regardless of age
+            all_items: If True, clear all items regardless of expiration
 
         Returns:
             int: Number of items cleared
