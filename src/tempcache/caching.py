@@ -72,13 +72,16 @@ class TempCache:
         if max_age is None:
             max_age = DEFAULT_MAX_AGE
 
-        if not max_age or max_age <= 0:
-            raise ValueError(f"Invalid max_age {max_age!r}")
+        if max_age <= 0:
+            raise ValueError(f"Invalid max_age {max_age}")
 
         if pickler is None:
             pickler = pickle
 
         path = Path(tempfile.gettempdir(), name)
+
+        # create folder if needed
+        path.mkdir(exist_ok=True)
 
         self.name = name
         self.path = path
@@ -317,7 +320,7 @@ class CacheItem:
         try:
             self.path.unlink()
         except (FileNotFoundError, PermissionError) as ex:
-            logger.warning("Error deleting %s: %s", self.path.name, ex)
+            logger.warning("Error deleting %s: %s", self.path, ex)
 
     def load(self):
         """Load and unpickle the cached item contents.
@@ -339,7 +342,7 @@ class CacheItem:
         try:
             return self.load()
         except Exception as ex:
-            logger.warning("Error loading %s: %s", self.path.name, ex)
+            logger.warning("Error loading %s: %s", self.path, ex)
 
     def save(self, data):
         """Pickle and save data to the cache item.
@@ -349,8 +352,6 @@ class CacheItem:
         """
         logger.debug("saving %s", self.path)
 
-        # (re)create parent folder if needed
-        self.path.parent.mkdir(exist_ok=True)
 
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
@@ -363,6 +364,5 @@ class CacheItem:
         """
         try:
             self.save(data)
-            return True
         except Exception as ex:
-            logger.warning("Error saving %s: %s", self.path.name, ex)
+            logger.warning("Error saving %s: %s", self.path, ex)

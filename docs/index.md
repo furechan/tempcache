@@ -18,7 +18,7 @@ to automatically cache the results of a function.
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
+cache = TempCache("mycache", max_age=CACHE_MAX_AGE)
 
 @cache
 def long_running(...):
@@ -36,7 +36,7 @@ at the call site with the `cache_result` method.
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-cache = TempCache(__name__, max_age=CACHE_MAX_AGE)
+cache = TempCache("mycache", max_age=CACHE_MAX_AGE)
 
 def long_running(...):
     ...
@@ -58,9 +58,9 @@ import cloudpickle
 from tempcache import TempCache
 
 CACHE_MAX_AGE = 24 * 60 * 60 * 2    # two days
-cache = TempCache("tempcache-foo",
-                       pickler=cloudpickle,
-                       max_age=CACHE_MAX_AGE)
+cache = TempCache("mycache",
+                    pickler=cloudpickle,
+                    max_age=CACHE_MAX_AGE)
 
 key = ...
 # key object can be complex as long as it is pickle-able

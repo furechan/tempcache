@@ -1,7 +1,6 @@
 """ tempcache tests """
 
 import os
-import shutil
 import base64
 import pytest
 
@@ -14,9 +13,9 @@ def cache():
     cache = TempCache(name)
 
     assert cache.path.name == name
+    assert cache.path.is_dir()
 
-    if cache.path.exists():
-        shutil.rmtree(cache.path)
+    cache.clear_items(all_items=True)
 
     return cache
 
