@@ -1,4 +1,4 @@
-""" Caching Utilities using Temporary files """
+"""Caching Utilities using Temporary files"""
 
 import re
 import time
@@ -21,10 +21,9 @@ DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
 FILE_PATTERN = "{digest}.tmp"
 
 
-
 class TempCache:
     """Temporary File Cache Utility.
-    
+
     Objects are stored in temporary files under a cache folder in the tempdir.
     The cache folder is automatically created if it does not exist.
     Objects are stored as pickled files with a hash of the key for filename.
@@ -36,10 +35,10 @@ class TempCache:
     @staticmethod
     def check_name(name):
         """Validate cache name.
-        
+
         Args:
             name: Cache name to validate
-            
+
         Raises:
             ValueError: If name is None or contains path separators
         """
@@ -92,10 +91,10 @@ class TempCache:
 
     def cache_item(self, path):
         """Create a cache item instance.
-        
+
         Args:
             path: Path for the cache item
-            
+
         Returns:
             CacheItem: New cache item instance
         """
@@ -103,7 +102,7 @@ class TempCache:
 
     def get_expiry(self):
         """Calculate the expiry timestamp.
-        
+
         Returns:
             float: Timestamp before which items are considered expired
         """
@@ -112,7 +111,7 @@ class TempCache:
 
     def items(self):
         """Iterate over all cache items.
-        
+
         Yields:
             CacheItem: Each cache item found
         """
@@ -123,10 +122,10 @@ class TempCache:
 
     def clear_items(self, all_items=False):
         """Clear expired or all cache items.
-        
+
         Args:
             all_items: If True, clear all items regardless of age
-            
+
         Returns:
             int: Number of items cleared
         """
@@ -141,10 +140,10 @@ class TempCache:
 
     def item_for_digest(self, digest):
         """Get cache item for a hash digest.
-        
+
         Args:
             digest: Hash digest string
-            
+
         Returns:
             CacheItem: Cache item (may not exist)
         """
@@ -161,10 +160,10 @@ class TempCache:
 
     def item_for_key(self, key):
         """Get cache item for a cache key.
-        
+
         Args:
             key: Cache key to hash
-            
+
         Returns:
             CacheItem: Cache item (may not exist)
         """
@@ -183,12 +182,12 @@ class TempCache:
 
     def item_for_task(self, func, args, kwargs):
         """Get cache item for a function call.
-        
+
         Args:
             func: Function to cache
             args: Positional arguments
             kwargs: Keyword arguments
-            
+
         Returns:
             CacheItem: Cache item whether or not it exists
         """
@@ -204,12 +203,12 @@ class TempCache:
 
     def cache_result(self, func, *args, **kwargs):
         """Get cached result or compute and cache new result.
-        
+
         Args:
             func: Function to call
             args: Positional arguments
             kwargs: Keyword arguments
-            
+
         Returns:
             The function result (cached or fresh)
         """
@@ -232,13 +231,14 @@ class TempCache:
 
     def __call__(self, func):
         """Decorator to cache function results.
-        
+
         Args:
             func: Function to wrap
-            
+
         Returns:
             callable: Wrapped function that caches results
         """
+
         @functools.wraps(func)
         def cached_func(*args, **kwargs):
             return self.cache_result(func, *args, **kwargs)
@@ -247,8 +247,7 @@ class TempCache:
 
 
 class CacheItem:
-    """A cache item representing a single cached object on disk.
-    """
+    """A cache item representing a single cached object on disk."""
 
     def __init__(self, path, *, pickler=None):
         """Initialize a cache item.
@@ -266,10 +265,9 @@ class CacheItem:
         self.path = path
         self.pickler = pickler
 
-
     def exists(self):
         """Check whether item exists on disk.
-        
+
         Returns:
             bool: True if the file exists, False otherwise
         """
@@ -277,10 +275,10 @@ class CacheItem:
 
     def older_than(self, whence):
         """Check whether item is older than given timestamp.
-        
+
         Args:
             whence: Timestamp or datetime to compare against
-            
+
         Returns:
             bool: True if file exists and is older than whence, False otherwise
         """
@@ -295,10 +293,10 @@ class CacheItem:
 
     def newer_than(self, whence):
         """Check whether item is newer than given timestamp.
-        
+
         Args:
             whence: Timestamp or datetime to compare against
-            
+
         Returns:
             bool: True if file exists and is newer than whence, False otherwise
         """
@@ -322,7 +320,7 @@ class CacheItem:
 
     def load(self):
         """Load and unpickle the cached item contents.
-        
+
         Returns:
             The unpickled object
         """
@@ -333,7 +331,7 @@ class CacheItem:
 
     def try_load(self):
         """Load and unpickle the cached item contents, ignoring errors.
-        
+
         Returns:
             The unpickled object or None if there was an error
         """
@@ -344,7 +342,7 @@ class CacheItem:
 
     def save(self, data):
         """Pickle and save data to the cache item.
-        
+
         Args:
             data: Object to pickle and save
         """
@@ -356,10 +354,9 @@ class CacheItem:
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
 
-
     def try_save(self, data):
         """Pickle and save data to the cache item, ignoring errors.
-        
+
         Args:
             data: Object to pickle and save
         """
@@ -367,5 +364,3 @@ class CacheItem:
             return self.save(data)
         except Exception as ex:
             logger.warning("Error saving %s: %s", self.path.name, ex)
-
-
