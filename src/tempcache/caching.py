@@ -17,16 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_NAME = "tempcache"
-DEFAULT_MAX_AGE = 24 * 60 * 60 * 7
 FILE_PATTERN = "{digest}.tmp"
+DEFAULT_MAX_AGE = 24 * 60 * 60 * 7  # one week
 
 
 class TempCache:
     """Temporary File Cache Utility.
 
     Objects are stored in temporary files under a cache folder in the tempdir.
-    The cache folder is automatically created if it does not exist.
-    Objects are stored as pickled files with a hash of the key for filename.
+    The cache folder is automatically created if it does not already exist.
+    Objects are stored as pickled data with a hash of the key for filename.
     """
 
     ONEDAY = 24 * 60 * 60
@@ -86,8 +86,6 @@ class TempCache:
         self.pickler = pickler
         self.max_age = max_age
 
-    def __repr__(self):
-        return f"TempCache({self.name!r})"
 
     def cache_item(self, path):
         """Create a cache item instance.
@@ -162,7 +160,7 @@ class TempCache:
         """Get cache item for a cache key.
 
         Args:
-            key: Cache key to hash
+            key: Cache key to hash. Must be pickle-able
 
         Returns:
             CacheItem: Cache item (may not exist)
@@ -181,7 +179,7 @@ class TempCache:
         return self.item_for_digest(digest)
 
     def item_for_task(self, func, args, kwargs):
-        """Get cache item for a function call.
+        """Get cache item corresponding to a function call.
 
         Args:
             func: Function to cache
@@ -189,7 +187,7 @@ class TempCache:
             kwargs: Keyword arguments
 
         Returns:
-            CacheItem: Cache item whether or not it exists
+            CacheItem: Cache item (may not exist)
         """
         funcname = f"{func.__module__}.{func.__qualname__}"
 
@@ -247,7 +245,10 @@ class TempCache:
 
 
 class CacheItem:
-    """A cache item representing a single cached object on disk."""
+    """A cache item representing a single pickle file on disk.
+    
+    A new cache item may not already exist, or may have just been deleted if it expired.
+    """
 
     def __init__(self, path, *, pickler=None):
         """Initialize a cache item.
@@ -361,6 +362,7 @@ class CacheItem:
             data: Object to pickle and save
         """
         try:
-            return self.save(data)
+            self.save(data)
+            return True
         except Exception as ex:
             logger.warning("Error saving %s: %s", self.path.name, ex)

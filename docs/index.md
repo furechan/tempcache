@@ -2,6 +2,16 @@
 
 TempCache is a Python utility that provides temporary file-based caching functionality. It's designed to cache function results and arbitrary data using the system's temporary directory.
 
+
+## Features
+
+- File-based caching using system's temp directory
+- Automatic cache expiration
+- Custom pickle support
+- Function caching through decorators
+- Key-based caching for arbitrary data
+
+
 ## Installation
 
 ```bash
@@ -18,7 +28,8 @@ from tempcache import TempCache
 # Create a cache instance
 cache = TempCache("mycache")
 
-# Use as a decorator
+# Use as a decorator.
+# Function parameters and return values must be pickle-able
 @cache
 def expensive_function(x, y):
     # Some expensive computation
@@ -38,15 +49,9 @@ item.save({"data": "value"})
 # Retrieve cached data
 if item.exists():
     data = item.load()
+
 ```
 
-## Features
-
-- File-based caching using system's temp directory
-- Automatic cache expiration
-- Custom pickle support
-- Function caching through decorators
-- Key-based caching for arbitrary data
 
 ## API Reference
 
@@ -88,7 +93,7 @@ Methods:
 - `try_load()`: Load item contents, ignoring errors
 - `try_save(data)`: Save item contents, ignoring errors
 
-## Examples
+## Further Examples
 
 ### Caching Function Results
 
@@ -160,18 +165,16 @@ if data is None:
     print("No cached data found")
 
 # Safe saving - handle failures gracefully
-success = item.try_save({"name": "John", "age": 30})
-if not success:
-    print("Failed to save to cache")
+item.try_save({"name": "John", "age": 30})
 ```
 
 ## Best Practices
 
-1. Use meaningful cache names to avoid conflicts
-2. Set appropriate max_age for your use case
-3. Handle cache loading exceptions in production code
-4. Use the source parameter when caching across different contexts
-5. Clear expired items periodically in long-running applications
+- Use meaningful cache names to avoid conflicts
+- Set appropriate max_age for your use case
+- Handle cache loading exceptions in production code
+- Use the source parameter when caching across different contexts
+- Clear expired items periodically in long-running applications
 
 ## Limitations
 
