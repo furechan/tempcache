@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.12
+- Switched to `uv-build` backend
+- Switched to `tox.toml` config
+- Added `cache_upath` method (experimental)
+- Renamed first argument `name_or_path`
+- Python minimal version now `3.10`
+
 ## 0.0.10
 - Added `try_load` and `try_save` methods to `CacheItem`
 

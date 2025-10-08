@@ -28,6 +28,7 @@ dev = [
  "tox-uv",
  "ruff",
  "pydev-toy>=0.0.12",
+ "tempcache",
 ]
 
 
@@ -41,4 +42,7 @@ allow-publish = true
 [tool.pytest.ini_options]
 addopts = [ "-p no:cacheprovider"]
 testpaths = ["tests"]
+
+[tool.uv.sources]
+tempcache = { workspace = true }
 

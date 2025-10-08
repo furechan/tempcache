@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.14' and platform_python_implementation != 'PyPy'",
@@ -1123,6 +1123,7 @@ dev = [
     { name = "pydev-toy" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "tempcache" },
     { name = "tox" },
     { name = "tox-uv" },
 ]
@@ -1136,6 +1137,7 @@ dev = [
     { name = "pydev-toy", specifier = ">=0.0.12" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "tempcache", editable = "." },
     { name = "tox" },
     { name = "tox-uv" },
 ]
