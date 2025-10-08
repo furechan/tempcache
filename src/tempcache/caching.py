@@ -1,6 +1,6 @@
 """Caching Utilities using Temporary files"""
 
-import re
+import os
 import time
 import pickle
 import inspect
@@ -21,6 +21,7 @@ FILE_PATTERN = "{digest}.tmp"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7  # one week
 
 
+
 class TempCache:
     """Temporary File Cache Utility.
 
@@ -32,25 +33,10 @@ class TempCache:
     ONEDAY = 24 * 60 * 60
     ONEHOUR = 60 * 60
 
-    @staticmethod
-    def check_name(name):
-        """Validate cache name.
-
-        Args:
-            name: Cache name to validate
-
-        Raises:
-            ValueError: If name is None or contains path separators
-        """
-        if name is None:
-            raise ValueError("Name must be a string!")
-
-        if re.search(r"\.\.|/|\\", name):
-            raise ValueError(f"Invalid name {name!r}")
 
     def __init__(
         self,
-        name: str = DEFAULT_NAME,
+        name_or_path: str = DEFAULT_NAME,
         *,
         source: str = None,
         max_age: int = None,
@@ -60,14 +46,13 @@ class TempCache:
         Temporary File Cache Utility.
 
         Args:
-            name: name of folder under tempdir (default 'tempcache')
+            name_or_path: name or path of cache folder (default 'tempcache')
+                if a simple name use as subfolder of tempdir
             source: optional, extra source information that can be
-                used to further differentiate key hashes
+                used to differentiate key hashes from other caches
             pickler: optional, custom pickler module like cloudpickle
             max_age: optional, maximum age in seconds
         """
-
-        self.check_name(name)
 
         if max_age is None:
             max_age = DEFAULT_MAX_AGE
@@ -78,12 +63,16 @@ class TempCache:
         if pickler is None:
             pickler = pickle
 
-        path = Path(tempfile.gettempdir(), name)
+        name_or_path = os.path.expanduser(name_or_path)
+
+        if os.path.isabs(name_or_path):
+            path = Path(name_or_path)
+        else:
+            path = Path(tempfile.gettempdir(), name_or_path)
 
         # create folder if needed
         path.mkdir(exist_ok=True)
 
-        self.name = name
         self.path = path
         self.source = source
         self.pickler = pickler
@@ -230,6 +219,52 @@ class TempCache:
 
         return result
 
+
+    def cache_upath(self, path, *, refresh=0):
+        """
+        Create local copy from a universal path
+        The local copy is updated when the remote has changed.
+        This is done by checking the modified time of the remote path.
+
+        Args:
+            path (Upath | Path): remote path
+            refresh (seconds): how often to check if the remote has changed
+
+        Returns:
+            path to local copy of the data
+        """
+
+        PATH_METHODS = ("exists", "stat", "read_bytes")
+
+        # Check path supports required methods (Cloudpath, UPath, Path)
+        if any(getattr(path, attr, None) is None for attr in PATH_METHODS):
+            raise TypeError(f"Invalid path type {type(path).__name__}")
+
+        key = (str(path),)
+        item = self.item_for_key(key)
+
+        # cache exists and is recent enough 
+        if refresh > 0 and item.newer_than(time.time() - refresh):
+            return item.path
+        
+        # path does not exist. remove cache and raise
+        if not path.exists():
+            item.delete()
+            raise ValueError(f"Path {path} does not exist!")
+
+        mtime = path.stat().st_mtime
+
+        # cache is up to date
+        if item.newer_than(mtime):
+            return item.path
+
+        # copy data to local cache
+        data = path.read_bytes()
+        item.path.write_bytes(data)
+
+        return item.path
+
+
     def __call__(self, func):
         """Decorator to cache function results.
 
@@ -248,7 +283,7 @@ class TempCache:
 
 
 class CacheItem:
-    """A cache item representing a single pickle file on disk.
+    """A cache item representing a single data file on disk.
     
     A new cache item may not already exist, or may have just been deleted if it expired.
     """
@@ -318,7 +353,7 @@ class CacheItem:
         logger.debug("Deleting %s", self.path)
 
         try:
-            self.path.unlink()
+            self.path.unlink(missing_ok=True)
         except (FileNotFoundError, PermissionError) as ex:
             logger.warning("Error deleting %s: %s", self.path, ex)
 

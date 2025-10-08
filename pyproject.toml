@@ -3,7 +3,7 @@ name = "tempcache"
 version = "0.0.12"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 description = "Python library to cache data and function results in temporary files"
 keywords = ["caching", "tempfiles"]
 authors = [ {"name" = "furechan", "email" = "furechan@xsmail.com"} ]
@@ -19,6 +19,10 @@ dev = [
  "pytest",
  "cloudpickle",
  "ipykernel>=6.29.5",
+ "tox",
+ "tox-uv",
+ "ruff",
+ "pydev-toy>=0.0.12",
 ]
 
 
