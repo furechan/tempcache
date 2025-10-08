@@ -5,7 +5,7 @@ build-backend = "uv_build"
 
 [project]
 name = "tempcache"
-version = "0.0.12"
+version = "0.0.13"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
@@ -40,7 +40,7 @@ allow-publish = true
 "*.ipynb" = ["F401", "F811"]
 
 [tool.pytest.ini_options]
-addopts = [ "-p no:cacheprovider"]
+addopts = ["-p no:cacheprovider"]
 testpaths = ["tests"]
 
 [tool.uv.sources]
