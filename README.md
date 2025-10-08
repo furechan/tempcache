@@ -100,3 +100,5 @@ Persistently cache results of callables
 Disk and file backed cache library compatible with Django
 - [cloudpickle](https://github.com/cloudpipe/cloudpickle)
 Extended pickling support for Python objects
+- [cached_path](https://github.com/allenai/cached_path)
+A file utility for accessing both local and remote files through a unified interface
