@@ -1,0 +1,3 @@
+# Exclude some file types from github stats
+# See https://github.com/github-linguist/linguist/blob/master/docs/overrides.md
+*.ipynb linguist-vendored

@@ -1,0 +1,48 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.8.0,<0.9.0"]
+
+
+[project]
+name = "tempcache"
+version = "0.0.14"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+description = "Python library to cache data and function results in temporary files"
+keywords = ["caching", "tempfiles"]
+authors = [ {"name" = "furechan", "email" = "furechan@xsmail.com"} ]
+urls.homepage = "https://github.com/furechan/tempcache"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+[dependency-groups]
+dev = [
+ "pytest",
+ "cloudpickle",
+ "ipykernel>=6.29.5",
+ "tox",
+ "tox-uv",
+ "ruff",
+ "universal_pathlib",
+ "s3fs>=2025.1.0"
+]
+
+[tool.pydev]
+allow-publish = true
+
+[tool.pytest.ini_options]
+addopts = ["-p no:cacheprovider"]
+testpaths = ["tests"]
+
+[tool.ruff]
+cache-dir = ".venv/ruff_cache"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"*.ipynb" = ["F401", "F811"]
+
+
