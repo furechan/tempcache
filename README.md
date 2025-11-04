@@ -7,7 +7,7 @@ Dy default, the package uses the `pickle` module to serialize data. Inputs are f
 
 
 > **Note**
-For more advanced use cases you may want to look at the `Memory` class
+For advanced use cases you may want to look at the `Memory` class
 in [joblib](https://github.com/joblib/joblib).
 
 
@@ -49,7 +49,7 @@ result = cache.cache_result(long_running, ...)
 ## Custom serialization
 
 In cases where the inputs or result cannot be serialized by `pickle`
-you can use a custom pickler module like `cloupickle`.
+you may want to use a custom pickler like the `cloupickle` module.
 
 ```python
 import cloudpickle
@@ -85,5 +85,3 @@ Disk and file backed cache library compatible with Django
 Extended pickling support for Python objects
 - [cached_path](https://github.com/allenai/cached_path)
 A file utility for accessing both local and remote files through a unified interface
-- [universal_pathlib](https://github.com/fsspec/universal_pathlib)
-Pathlib api extended to use fsspec backends
