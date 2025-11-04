@@ -5,6 +5,7 @@ This library is best used for long running or expensive functions as well as pro
 Each item is saved as a saparate file whose name is computed by serializing the inputs and hashing the result into a unique file name.
 
 
+
 > **Note**
 For advanced use cases you may want to look at the `Memory` class
 in [joblib](https://github.com/joblib/joblib).
@@ -14,7 +15,9 @@ in [joblib](https://github.com/joblib/joblib).
 
 Caching is done through a `TempCache` class instance that manages cache items in a dedicated caching folder.
 The first parameter should be the name to use as temp sub-folder or alternatively the absolute path of the cache folder.
-You can use any instance of the `TempCache` class as a decorator to wrap a function and automatically cache its results.
+Note that the caching folder will be created if it does not already exists.
+
+Any instance of the `TempCache` class can be used as a decorator to wrap a function and automatically cache its results.
 
 ```python
 from tempcache import TempCache
