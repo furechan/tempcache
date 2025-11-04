@@ -42,7 +42,8 @@ testpaths = ["tests"]
 cache-dir = ".venv/ruff_cache"
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
+# F401: Module imported but unused (common in notebooks for experimentation)
+# F811: Redefinition of unused variable (common in notebooks when rerunning cells)
 "*.ipynb" = ["F401", "F811"]
 
 
