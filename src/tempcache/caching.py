@@ -24,7 +24,6 @@ FILE_PATTERN = "{digest}.tmp"
 DEFAULT_MAX_AGE = 24 * 60 * 60 * 7  # one week
 
 
-
 class TempCache:
     """Temporary File Cache Utility.
 
@@ -32,9 +31,6 @@ class TempCache:
     The cache folder is automatically created if it does not already exist.
     Objects are stored as pickled data with a hash of the key for filename.
     """
-
-    ONEDAY = 24 * 60 * 60
-    ONEHOUR = 60 * 60
 
 
     def __init__(
@@ -227,12 +223,12 @@ class TempCache:
 
     def cache_upath(self, path, *, refresh=0):
         """
-        Create local file cache from a universal path
-        The local copy is updated when the remote has changed.
+        Create local cache file from a universal path
+        The local copy is updated if/when the remote has changed.
         This is done by checking the modified time of the remote path.
 
         Args:
-            path (Upath | Path): remote path
+            path (Upath): remote path
             refresh (seconds): how often to check if the remote has changed
 
         Returns:
@@ -373,7 +369,7 @@ class CacheItem:
         with self.path.open("rb") as file:
             return self.pickler.load(file)
 
-    def try_load(self):
+    def try_load(self, fallback=None):
         """Load and unpickle the cached item contents, ignoring errors.
 
         Returns:
@@ -383,6 +379,7 @@ class CacheItem:
             return self.load()
         except Exception as ex:
             logger.warning("Error loading %s: %s", self.path, ex)
+            return fallback
 
     def save(self, data):
         """Pickle and save data to the cache item.
@@ -391,7 +388,6 @@ class CacheItem:
             data: Object to pickle and save
         """
         logger.debug("saving %s", self.path)
-
 
         with self.path.open("wb") as file:
             self.pickler.dump(data, file)
