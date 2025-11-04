@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.0.14
+- Added `wrap` method as explciit decorator
+
+## 0.0.13
+- Added `cache_upath` method to cache cloud paths
+
 ## 0.0.12
 - Switched to `uv-build` backend
 - Switched to `tox.toml` config
-- Added `cache_upath` method to cahce Upath
 - Renamed first argument `name_or_path`
 - Python minimal version now `3.10`
 

@@ -35,7 +35,7 @@ class TempCache:
 
     def __init__(
         self,
-        name_or_path: str = DEFAULT_NAME,
+        path_or_name: str = DEFAULT_NAME,
         *,
         source: Optional[str] = None,
         max_age: Optional[int] = None,
@@ -62,12 +62,12 @@ class TempCache:
         if pickler is None:
             pickler = pickle
 
-        name_or_path = os.path.expanduser(name_or_path)
+        path_or_name = os.path.expanduser(path_or_name)
 
-        if os.path.isabs(name_or_path):
-            path = Path(name_or_path)
+        if os.path.isabs(path_or_name):
+            path = Path(path_or_name)
         else:
-            path = Path(tempfile.gettempdir(), name_or_path)
+            path = Path(tempfile.gettempdir(), path_or_name)
 
         # create folder if needed
         path.mkdir(exist_ok=True)
@@ -76,6 +76,11 @@ class TempCache:
         self.source = source
         self.pickler = pickler
         self.max_age = max_age
+
+
+    def __call__(self, func):
+        """Decorator to wrap a function. See wrap()."""
+        return self.wrap(func)
 
 
     def cache_item(self, path):
@@ -266,7 +271,7 @@ class TempCache:
         return item.path
 
 
-    def __call__(self, func):
+    def wrap(self, func):
         """Decorator to cache function results.
 
         Args:

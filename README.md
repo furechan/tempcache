@@ -1,6 +1,7 @@
 # Python library to cache data and function results in temporary files
 
 This library offers a simple way to cache data and function results using temporary files, including a mechanism for automatic expiration after a certain time.
+This library is best used for long running or expensive functions as well as processes that return large datasets.
 
 Dy default, the package uses the `pickle` module to serialize data. Inputs are first serialized and then hashed to create unique cache file names.
 
@@ -12,16 +13,16 @@ in [joblib](https://github.com/joblib/joblib).
 
 ## Basic usage
 
-An instance of the `TempCache` class be used as a decorator
-to wrap a function and cache its results.
+Caching is done through a `TempCache` class instance that manages cache items in a dedicated caching folder.
+The first parameter should be the name to use as temp sub-folder or alternatively the absolute path of the cache folder.
+You can use any instance of the `TempCache` class as a decorator to wrap a function and automatically cache its results.
 
 ```python
 from tempcache import TempCache
 
-CACHE_MAX_AGE = 86_400  # one day
-cache = TempCache("mycache", max_age=CACHE_MAX_AGE)
+cache = TempCache("mycache", max_age=86_400) # One day
 
-@cache
+@cache.wrap
 def long_running(...):
     ...
 
@@ -30,14 +31,13 @@ result = long_running(...)
 
 ## Caching results at the call site
 
-You can also use a `TempCache` object to cache a function call directly 
+You can also use a `TempCache` instance to cache a function call directly 
 at the call site with the `cache_result` method. 
 
 ```python
 from tempcache import TempCache
 
-CACHE_MAX_AGE = 86_400  # one day
-cache = TempCache("mycache", max_age=CACHE_MAX_AGE)
+cache = TempCache("mycache", max_age=86_400) # One day
 
 def long_running(...):
     ...
@@ -56,10 +56,9 @@ import cloudpickle
 
 from tempcache import TempCache
 
-CACHE_MAX_AGE = 86_400  # one day
 cache = TempCache("mycache",
                     pickler=cloudpickle,
-                    max_age=CACHE_MAX_AGE)
+                    max_age=86_400) # one day
 ```
 
 
@@ -89,3 +88,5 @@ Disk and file backed cache library compatible with Django
 Extended pickling support for Python objects
 - [cached_path](https://github.com/allenai/cached_path)
 A file utility for accessing both local and remote files through a unified interface
+- [universal_pathlib](https://github.com/fsspec/universal_pathlib)
+pathlib api extended to use fsspec backends
