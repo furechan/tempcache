@@ -35,7 +35,7 @@ class TempCache:
 
     def __init__(
         self,
-        path_or_name: str = DEFAULT_NAME,
+        name_or_path: str = DEFAULT_NAME,
         *,
         source: Optional[str] = None,
         max_age: Optional[int] = None,
@@ -62,12 +62,12 @@ class TempCache:
         if pickler is None:
             pickler = pickle
 
-        path_or_name = os.path.expanduser(path_or_name)
+        name_or_path = os.path.expanduser(name_or_path)
 
-        if os.path.isabs(path_or_name):
-            path = Path(path_or_name)
+        if os.path.isabs(name_or_path):
+            path = Path(name_or_path)
         else:
-            path = Path(tempfile.gettempdir(), path_or_name)
+            path = Path(tempfile.gettempdir(), name_or_path)
 
         # create folder if needed
         path.mkdir(exist_ok=True)
