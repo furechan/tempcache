@@ -61,9 +61,6 @@ cache = TempCache("mycache",
                     max_age=86_400) # one day
 ```
 
-
-
-
 ## Examples
 
 Examples notebooks are in the `extras` folder.
@@ -89,4 +86,4 @@ Extended pickling support for Python objects
 - [cached_path](https://github.com/allenai/cached_path)
 A file utility for accessing both local and remote files through a unified interface
 - [universal_pathlib](https://github.com/fsspec/universal_pathlib)
-pathlib api extended to use fsspec backends
+Pathlib api extended to use fsspec backends
