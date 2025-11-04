@@ -49,7 +49,7 @@ result = cache.cache_result(long_running, ...)
 ## Custom serialization
 
 In cases where the inputs or result cannot be serialized by `pickle`
-you should use a pickler module like `cloupickle`.
+you can use a custom pickler module like `cloupickle`.
 
 ```python
 import cloudpickle
@@ -61,6 +61,8 @@ cache = TempCache("mycache",
                     pickler=cloudpickle,
                     max_age=CACHE_MAX_AGE)
 ```
+
+
 
 
 ## Examples
