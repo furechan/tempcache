@@ -2,8 +2,7 @@
 
 This library offers a simple way to cache data and function results using temporary files, including a mechanism for automatic expiration after a certain time.
 This library is best used for long running or expensive functions as well as processes that return large datasets.
-
-Dy default, the package uses the `pickle` module to serialize data. Inputs are first serialized and then hashed to create unique cache file names.
+Each item is saved as a saparate file whose name is computed by serializing the inputs and hashing the result into a unique file name.
 
 
 > **Note**
