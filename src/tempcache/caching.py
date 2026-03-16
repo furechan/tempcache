@@ -134,7 +134,7 @@ class TempCache:
         return count
 
 
-    def item_for_digest(self, digest):
+    def item_for_digest(self, digest: str):
         """Get cache item for a hash digest.
 
         Args:
@@ -154,7 +154,7 @@ class TempCache:
 
         return item
 
-    def item_for_key(self, key):
+    def item_for_key(self, key: Any):
         """Get cache item for a cache key.
 
         Args:
@@ -178,6 +178,8 @@ class TempCache:
 
     def item_for_task(self, func, args, kwargs):
         """Get cache item corresponding to a function call.
+
+        The cache key is based on the function's module and qualified name, together with the bound arguments.
 
         Args:
             func: Function to cache
