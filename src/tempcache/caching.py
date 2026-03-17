@@ -202,6 +202,8 @@ class TempCache:
     def cache_result(self, func, *args, **kwargs):
         """Get cached result or compute and cache new result.
 
+        The cache key is based on the function's module and qualified name, together with the bound arguments.
+
         Args:
             func: Function to call
             args: Positional arguments
