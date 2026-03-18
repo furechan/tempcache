@@ -9,8 +9,6 @@ import hashlib
 import tempfile
 import functools
 
-import datetime as dt
-
 from pathlib import Path
 
 from typing import Any, Optional
@@ -83,37 +81,14 @@ class TempCache:
         return self.wrap(func)
 
 
-    def cache_item(self, path):
-        """Create a cache item instance.
-
-        Args:
-            path: Path for the cache item
-
-        Returns:
-            CacheItem: New cache item instance
-        """
-        return CacheItem(path, pickler=self.pickler)
-
-    def get_expiry(self):
-        """Calculate the expiry timestamp.
-
-        Returns:
-            float: Timestamp before which items are considered expired
-        """
-        expiry = time.time() - self.max_age
-        return expiry
-
     def items(self):
-        """Iterate over all cache items.
+        """Iterate over all cache file paths.
 
         Yields:
-            CacheItem: Each cache item found
+            Path: Each cache file found
         """
         pattern = FILE_PATTERN.format(digest="*")
-
-        for file in self.path.glob(pattern):
-            yield self.cache_item(file)
-
+        yield from self.path.glob(pattern)
 
     def clear_items(self, all_items=False):
         """Clear expired or all cache items.
@@ -125,61 +100,42 @@ class TempCache:
             int: Number of items cleared
         """
         count = 0
-        expiry = self.get_expiry()
-        for item in self.items():
-            if all_items or item.older_than(expiry):
-                item.delete()
-                count += 1
+        expiry = time.time() - self.max_age
+
+        for path in self.items():
+            try:
+                if all_items or path.stat().st_mtime < expiry:
+                    path.unlink(missing_ok=True)
+                    count += 1
+            except FileNotFoundError:
+                pass
 
         return count
 
 
-    def item_for_digest(self, digest: str):
-        """Get cache item for a hash digest.
-
-        Args:
-            digest: Hash digest string
-
-        Returns:
-            CacheItem: Cache item (may not exist)
-        """
-        fname = FILE_PATTERN.format(digest=digest)
-        path = self.path.joinpath(fname)
-        item = self.cache_item(path)
-
-        # delete expired item to enforce expiry
-        expiry = self.get_expiry()
-        if item.older_than(expiry):
-            item.delete()
-
-        return item
-
-    def item_for_key(self, key: Any):
-        """Get cache item for a cache key.
+    def key_digest(self, key: Any) -> str:
+        """Compute hash digest for a cache key.
 
         Args:
             key: Cache key to hash. Must be pickle-able
 
         Returns:
-            CacheItem: Cache item (may not exist)
+            str: Hex digest string
         """
-        hash = hashlib.md5()
+        hasher = hashlib.md5()
 
         if self.source is not None:
-            data = self.source.encode("utf-8")
-            hash.update(data)
+            hasher.update(self.source.encode("utf-8"))
 
-        data = self.pickler.dumps(key)
-        hash.update(data)
+        hasher.update(self.pickler.dumps(key))
 
-        digest = hash.hexdigest()
+        return hasher.hexdigest()
 
-        return self.item_for_digest(digest)
+    def task_digest(self, func, args, kwargs) -> str:
+        """Compute hash digest for a function call.
 
-    def item_for_task(self, func, args, kwargs):
-        """Get cache item corresponding to a function call.
-
-        The cache key is based on the function's module and qualified name, together with the bound arguments.
+        The key is based on the function's module and qualified name,
+        together with the bound arguments.
 
         Args:
             func: Function to cache
@@ -187,7 +143,7 @@ class TempCache:
             kwargs: Keyword arguments
 
         Returns:
-            CacheItem: Cache item (may not exist)
+            str: Hex digest string
         """
         funcname = f"{func.__module__}.{func.__qualname__}"
 
@@ -195,9 +151,56 @@ class TempCache:
         params = signature.bind(*args, **kwargs)
         params.apply_defaults()
 
-        key = (funcname, params)
+        return self.key_digest((funcname, params))
 
-        return self.item_for_key(key)
+
+    def digest_path(self, digest: str) -> Path:
+        return self.path / FILE_PATTERN.format(digest=digest)
+
+
+    def try_load(self, digest: str, fallback=None):
+        """Load cached data for a digest, returning fallback on miss, expiry, or error.
+
+        Args:
+            digest: Hash digest string from key_digest()
+            fallback: Value to return on cache miss or error (default None)
+
+        Returns:
+            Cached object or fallback
+        """
+        path = self.digest_path(digest)
+        expiry = time.time() - self.max_age
+
+        try:
+            if path.stat().st_mtime < expiry:
+                path.unlink(missing_ok=True)
+                return fallback
+        except FileNotFoundError:
+            return fallback
+
+        try:
+            logger.debug("Loading %s", path)
+            with path.open("rb") as file:
+                return self.pickler.load(file)
+        except Exception as ex:
+            logger.warning("Error loading %s: %s", path, ex)
+            return fallback
+
+    def try_save(self, digest: str, data):
+        """Pickle and save data for a digest, ignoring errors.
+
+        Args:
+            digest: Hash digest string from key_digest()
+            data: Object to pickle and save
+        """
+        path = self.digest_path(digest)
+
+        try:
+            logger.debug("Saving %s", path)
+            with path.open("wb") as file:
+                self.pickler.dump(data, file)
+        except Exception as ex:
+            logger.warning("Error saving %s: %s", path, ex)
 
     def cache_result(self, func, *args, **kwargs):
         """Get cached result or compute and cache new result.
@@ -212,67 +215,15 @@ class TempCache:
         Returns:
             The function result (cached or fresh)
         """
-        item = self.item_for_task(func, args, kwargs)
+        MISSING = object()
+        digest = self.task_digest(func, args, kwargs)
+        result = self.try_load(digest, fallback=MISSING)
 
-        try:
-            if item.exists():
-                return item.load()
-        except Exception as ex:
-            logger.warning("Failed to load %s: %s", item.path, ex)
-
-        result = func(*args, **kwargs)
-
-        try:
-            item.save(result)
-        except Exception as ex:
-            logger.warning("Failed to save %s: %s", item.path, ex)
+        if result is MISSING:
+            result = func(*args, **kwargs)
+            self.try_save(digest, result)
 
         return result
-
-
-    def cache_upath(self, path, *, refresh=0):
-        """
-        Create local cache file from a universal path
-        The local copy is updated if/when the remote has changed.
-        This is done by checking the modified time of the remote path.
-
-        Args:
-            path (Upath): remote path
-            refresh (seconds): how often to check if the remote has changed
-
-        Returns:
-            path to local copy of the data
-        """
-
-        PATH_METHODS = ("exists", "stat", "read_bytes")
-
-        # Check path supports required methods (Cloudpath, UPath, Path)
-        if any(getattr(path, attr, None) is None for attr in PATH_METHODS):
-            raise TypeError(f"Invalid path type {type(path).__name__}")
-
-        key = (str(path),)
-        item = self.item_for_key(key)
-
-        # cache exists and is recent enough 
-        if refresh > 0 and item.newer_than(time.time() - refresh):
-            return item.path
-        
-        # path does not exist. remove cache and raise
-        if not path.exists():
-            item.delete()
-            raise ValueError(f"Path {path} does not exist!")
-
-        mtime = path.stat().st_mtime
-
-        # cache is up to date
-        if item.newer_than(mtime):
-            return item.path
-
-        # copy data to local cache
-        data = path.read_bytes()
-        item.path.write_bytes(data)
-
-        return item.path
 
 
     def wrap(self, func):
@@ -290,124 +241,3 @@ class TempCache:
             return self.cache_result(func, *args, **kwargs)
 
         return cached_func
-
-
-class CacheItem:
-    """A cache item representing a single data file on disk.
-    
-    A new cache item may not already exist, or may have just been deleted if it expired.
-    """
-
-    def __init__(self, path, *, pickler=None):
-        """Initialize a cache item.
-
-        Args:
-            path: Path of the cached item
-            pickler: Custom pickler module (defaults to pickle)
-        """
-        if isinstance(path, str):
-            path = Path(path).resolve()
-
-        if pickler is None:
-            pickler = pickle
-
-        self.path = path
-        self.pickler = pickler
-
-    def exists(self):
-        """Check whether item exists on disk.
-
-        Returns:
-            bool: True if the file exists, False otherwise
-        """
-        return self.path.exists()
-
-    def older_than(self, whence):
-        """Check whether item is older than given timestamp.
-
-        Args:
-            whence: Timestamp or datetime to compare against
-
-        Returns:
-            bool: True if file exists and is older than whence, False otherwise
-        """
-        if isinstance(whence, dt.datetime):
-            whence = whence.timestamp()
-
-        try:
-            mtime = self.path.stat().st_mtime
-            return mtime < whence
-        except FileNotFoundError:
-            return False
-
-    def newer_than(self, whence):
-        """Check whether item is newer than given timestamp.
-
-        Args:
-            whence: Timestamp or datetime to compare against
-
-        Returns:
-            bool: True if file exists and is newer than whence, False otherwise
-        """
-        if isinstance(whence, dt.datetime):
-            whence = whence.timestamp()
-
-        try:
-            mtime = self.path.stat().st_mtime
-            return mtime > whence
-        except FileNotFoundError:
-            return False
-
-    def delete(self):
-        """Delete the cache item from disk. Ignoring errors."""
-        logger.debug("Deleting %s", self.path)
-
-        try:
-            self.path.unlink(missing_ok=True)
-        except (FileNotFoundError, PermissionError) as ex:
-            logger.warning("Error deleting %s: %s", self.path, ex)
-
-    def load(self):
-        """Load and unpickle the cached item contents.
-
-        Returns:
-            The unpickled object
-        """
-        logger.debug("Loading %s", self.path)
-
-        with self.path.open("rb") as file:
-            return self.pickler.load(file)
-
-    def try_load(self, fallback=None):
-        """Load and unpickle the cached item contents, ignoring errors.
-
-        Returns:
-            The unpickled object or None if there was an error
-        """
-        try:
-            return self.load()
-        except Exception as ex:
-            logger.warning("Error loading %s: %s", self.path, ex)
-            return fallback
-
-    def save(self, data):
-        """Pickle and save data to the cache item.
-
-        Args:
-            data: Object to pickle and save
-        """
-        logger.debug("saving %s", self.path)
-
-        with self.path.open("wb") as file:
-            self.pickler.dump(data, file)
-
-    def try_save(self, data):
-        """Pickle and save data to the cache item, ignoring errors.
-
-        Args:
-            data: Object to pickle and save
-        """
-        try:
-            self.save(data)
-        except Exception as ex:
-            logger.warning("Error saving %s: %s", self.path, ex)

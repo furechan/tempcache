@@ -32,13 +32,11 @@ def test_cache_item(cache):
     key = ("some", "composite", "key")
     value = ("some", "composite", "value")
 
-    item = cache.item_for_key(key)
+    digest = cache.key_digest(key)
 
-    assert item is not None
+    cache.try_save(digest, value)
 
-    item.try_save(value)
-
-    res = item.try_load()
+    res = cache.try_load(digest)
 
     assert res == value
 
