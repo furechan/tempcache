@@ -4,10 +4,6 @@ This library offers a simple way to cache data and function results using tempor
 This library is best suited for slow or expensive functions that return large or complex results.
 Each item is saved as a separate file whose name is computed by serializing the inputs and hashing the result into a unique file name.
 
-> **Note**
-> For advanced use cases you may want to look at the `Memory` class
-> in [joblib](https://github.com/joblib/joblib).
-
 
 ## Basic usage
 
@@ -62,8 +58,6 @@ if result is None:
     result = compute(my_key)
     cache.try_save(digest, result)
 ```
-
-
 
 ## Clearing the cache
 
