@@ -2,6 +2,7 @@
 
 ## 0.0.14
 - Added `wrap` method as explciit decorator
+- Replaced tox with nox for the python version test matrix (`noxfile.py`)
 
 ## 0.0.12
 - Switched to `uv-build` backend
